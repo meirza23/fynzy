@@ -1,0 +1,26 @@
+# Build
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ASP.NET secrets
+**/secrets.json
+
+# VSCode settings (isteğe bağlı)
+.vscode/
+
+# Dotnet tools
+*.db
+*.sqlite
+
+# Entity Framework Migrations History
+Migrations/
+
+# Rider / JetBrains stuff
+.idea/
+*.sln.iml

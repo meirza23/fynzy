@@ -1,3 +1,4 @@
+using Fynzy.api.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Fynzy.api.Data

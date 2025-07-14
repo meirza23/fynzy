@@ -1,6 +1,11 @@
+using Microsoft.EntityFrameworkCore;
+using Fynzy.api.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Servisleri ekle
+builder.Services.AddDbContext<FynzyDbContext>(options => 
+    options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL")));
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -41,5 +46,11 @@ app.UseAuthorization();
 
 // Controller'ları eşleştir
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<FynzyDbContext>();
+    dbContext.Database.Migrate();
+}
 
 app.Run();
