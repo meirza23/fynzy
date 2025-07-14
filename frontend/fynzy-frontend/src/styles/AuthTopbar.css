@@ -10,9 +10,12 @@
   padding: 1.5rem 3rem;
   align-items: center;
   z-index: 1000;
+  background: rgba(10, 12, 28, 0.7);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
-.auth-topbar .logo {
+.logo {
   font-family: 'Pacifico', cursive;
   font-size: 2.8rem;
   font-weight: 400;
@@ -22,7 +25,8 @@
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.auth-topbar .logo:hover {
+.logo:hover {
   transform: scale(1.05) rotate(-2deg);
   text-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
+
