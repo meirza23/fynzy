@@ -13,11 +13,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.2rem 3rem;
+  padding: 1.5rem 3rem;
   background: rgba(15, 20, 40, 0.85);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   z-index: 1000;
+  flex-shrink: 0;
 }
 
 .header-left {
@@ -82,6 +83,16 @@
   overflow: hidden;
 }
 
+.dashboard-section,
+.transactions-section,
+.reports-section,
+.budget-section {
+  padding: 25px 35px; /* More spacious padding */
+  overflow-y: auto; /* Enable vertical scrolling */
+  height: calc(100vh - 180px); /* Dynamic height calculation */
+  width: 100%;
+}
+
 .dashboard-nav {
   width: 220px;
   background: rgba(20, 25, 50, 0.7);
@@ -140,26 +151,15 @@
   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>');
 }
 
-.dashboard-section, 
-.transactions-section,
-.reports-section,
-.budget-section {
+.main-content-section {
   flex: 1;
   padding: 2rem;
   overflow-y: auto;
-  display: none;
-}
-
-.dashboard-section.active,
-.transactions-section.active,
-.reports-section.active,
-.budget-section.active {
-  display: block;
 }
 
 .summary-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
@@ -240,6 +240,7 @@
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  height: 100%;
 }
 
 .chart-wrapper h3 {
@@ -256,6 +257,7 @@
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  margin-top: 1.5rem;
 }
 
 .recent-transactions h3 {
@@ -263,6 +265,11 @@
   margin-bottom: 1.5rem;
   font-size: 1.3rem;
   color: #6a71e0;
+}
+
+.transactions-table-container {
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 table {
@@ -425,6 +432,7 @@ textarea {
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  margin-top: 20px;
 }
 
 .placeholder-content p {
@@ -449,6 +457,62 @@ textarea {
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1.5rem;
+}
+
+/* ===== FILTERS SECTION ===== */
+.filters {
+  display: flex;
+  gap: 1.5rem; /* Add space between filter sections */
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+  margin-bottom: 1.5rem;
+}
+
+.filters > * {
+  flex: 1;
+  min-width: 250px; /* Prevent elements from becoming too small */
+}
+
+.filters select {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(20, 25, 50, 0.5);
+  color: #fff;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.date-filter {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  background: rgba(20, 25, 50, 0.5);
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.date-filter input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  padding: 0.5rem;
+  flex: 1;
+}
+
+.date-filter button {
+  background: rgba(106, 113, 224, 0.3);
+  color: #6a71e0;
+  border: 1px solid rgba(106, 113, 224, 0.5);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.date-filter button:hover {
+  background: rgba(106, 113, 224, 0.4);
 }
 
 @keyframes spin {
