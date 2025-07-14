@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthTopbar from '../components/AuthTopbar';
 import '../styles/Register.css';
+import api from '../api'; // API istekleri için
 
 const Register = () => {
   const [userData, setUserData] = useState({
@@ -13,29 +14,50 @@ const Register = () => {
     confirmPassword: ''
   });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setUserData(prev => ({ ...prev, [name]: value }));
+    setError(''); // Hata mesajını temizle
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    // Validation
+    // Validasyon
     if (!userData.firstName || !userData.lastName || !userData.email || !userData.password) {
       setError('Lütfen zorunlu alanları doldurun');
+      setIsLoading(false);
       return;
     }
     
     if (userData.password !== userData.confirmPassword) {
       setError('Şifreler eşleşmiyor');
+      setIsLoading(false);
       return;
     }
     
-    // Frontend-only action - just navigate to home
-    navigate('/home');
+    try {
+      // Backend'e kayıt isteği gönder
+      await api.post('/auth/register', {
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        phone: userData.phone,
+        password: userData.password
+      });
+
+      // Başarılı kayıt sonrası login sayfasına yönlendir
+      navigate('/login');
+    } catch (error) {
+      // Hata durumunda
+      setError(error.response?.data || 'Kayıt işlemi başarısız oldu');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -116,6 +138,7 @@ const Register = () => {
                   onChange={handleChange}
                   required
                 />
+                <small className="password-hint">En az 6 karakter</small>
               </div>
               
               <div className="input-group">
@@ -132,8 +155,12 @@ const Register = () => {
               </div>
             </div>
             
-            <button type="submit" className="register-button">
-              Kayıt Ol
+            <button 
+              type="submit" 
+              className="register-button"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Kayıt Olunuyor...' : 'Kayıt Ol'}
             </button>
           </form>
           

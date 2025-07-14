@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthTopbar from '../components/AuthTopbar';
 import '../styles/Login.css';
+import api from '../api'; // API istekleri için
 
 const Login = () => {
   const [credentials, setCredentials] = useState({
@@ -9,24 +10,45 @@ const Login = () => {
     password: ''
   });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setCredentials(prev => ({ ...prev, [name]: value }));
+    setError(''); // Hata mesajını temizle
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    // Basic validation
+    // Temel validasyon
     if (!credentials.email || !credentials.password) {
       setError('Lütfen tüm alanları doldurun');
+      setIsLoading(false);
       return;
     }
     
-    // Frontend-only action - just navigate to home
-    navigate('/home');
+    try {
+      // Backend'e giriş isteği gönder
+      const response = await api.post('/auth/login', {
+        email: credentials.email,
+        password: credentials.password
+      });
+
+      // Token'ı ve kullanıcı bilgilerini sakla
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      
+      // Ana sayfaya yönlendir
+      navigate('/home');
+    } catch (error) {
+      // Hata durumunda
+      setError(error.response?.data || 'Giriş işlemi başarısız oldu');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -68,8 +90,12 @@ const Login = () => {
               />
             </div>
             
-            <button type="submit" className="login-button">
-              Giriş Yap
+            <button 
+              type="submit" 
+              className="login-button"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
             </button>
           </form>
           
