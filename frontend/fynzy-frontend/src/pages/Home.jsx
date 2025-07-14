@@ -217,13 +217,12 @@ const Home = () => {
         <div className="header-left">
           <div className="logo">Fynzy</div>
           <div className="welcome-message">
-            Hoş geldin, <span>{user.firstName} {user.lastName}</span>
+            Hoş geldin, <span>{user.firstName}</span>
           </div>
         </div>
         
         <div className="header-right">
           <div className="user-info">
-            <div className="user-email">{user.email}</div>
             <div className="balance">Bakiye: {formatCurrency(balance)}</div>
           </div>
           <button onClick={handleLogout} className="logout-button">
