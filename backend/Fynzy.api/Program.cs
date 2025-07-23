@@ -53,7 +53,7 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(jwtKey)) // Düzeltilmiş kısım
+            Encoding.UTF8.GetBytes(jwtKey))
     };
 });
 
@@ -61,6 +61,20 @@ var app = builder.Build();
 
 // Middleware Pipeline
 app.UseCors("ReactPolicy");
+
+// Hata loglama middleware'i
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Hata: {ex}");
+        throw;
+    }
+});
 
 if (app.Environment.IsDevelopment())
 {

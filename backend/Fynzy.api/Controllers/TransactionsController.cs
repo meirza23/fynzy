@@ -37,7 +37,8 @@ namespace Fynzy.api.Controllers
                 .OrderByDescending(t => t.Date)
                 .ToListAsync();
                 
-            return Ok(transactions);
+            // Null durumunda boş dizi dön
+            return Ok(transactions ?? new List<Transaction>());
         }
 
         [HttpPost]

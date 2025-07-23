@@ -53,15 +53,20 @@ const Home = () => {
       setIncome(income || 0);
       setExpense(expense || 0);
       
-      // Fetch transactions
+      // Fetch transactions - HATA DÜZELTİLDİ
       const transactionsRes = await axios.get('/api/transactions', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       
-      setTransactions(transactionsRes.data.map(t => ({
+      // Dizi kontrolü eklendi
+      const transactionsData = Array.isArray(transactionsRes.data) 
+        ? transactionsRes.data 
+        : [];
+      
+      setTransactions(transactionsData.map(t => ({
         ...t,
         date: new Date(t.date).toISOString().split('T')[0]
-      })) || []);
+      })));
     } catch (error) {
       console.error('Veri yükleme hatası:', error);
       alert('Finansal veriler yüklenirken hata oluştu');

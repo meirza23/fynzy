@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Axios instance oluştur
 const api = axios.create({
-  baseURL: 'http://localhost:5082/api', // Backend adresi
+  baseURL: 'http://localhost:5082/api',
   headers: {
     'Content-Type': 'application/json'
   }
@@ -30,9 +30,15 @@ api.interceptors.response.use(
         localStorage.removeItem('user');
         window.location.href = '/login';
       }
-      return Promise.reject(error.response.data);
+      
+      // Backend'den özel hata mesajı varsa onu göster
+      const errorMessage = error.response.data?.message 
+        || error.response.data
+        || 'Beklenmeyen bir hata oluştu';
+      
+      return Promise.reject(errorMessage);
     }
-    return Promise.reject(error.message);
+    return Promise.reject('Ağ hatası oluştu');
   }
 );
 

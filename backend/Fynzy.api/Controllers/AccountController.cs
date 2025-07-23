@@ -38,9 +38,10 @@ namespace Fynzy.api.Controllers
                 return BadRequest("Hesap bulunamadı");
             }
             
+            // Transactions null kontrolü eklendi
             var transactions = await _context.Transactions
                 .Where(t => t.UserId == userId)
-                .ToListAsync();
+                .ToListAsync() ?? new List<Transaction>();
                 
             var income = transactions
                 .Where(t => t.Type == "income")
