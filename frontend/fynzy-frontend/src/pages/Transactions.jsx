@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Transactions = ({ 
   categories, 
@@ -8,11 +8,40 @@ const Transactions = ({
   handleSubmitTransaction, 
   transactions
 }) => {
+  const [filteredTransactions, setFilteredTransactions] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState('Tüm Kategoriler');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  
+  useEffect(() => {
+    let result = transactions;
+    
+    // Apply category filter
+    if (categoryFilter !== 'Tüm Kategoriler') {
+      result = result.filter(t => t.category === categoryFilter);
+    }
+    
+    // Apply date filter
+    if (startDate) {
+      result = result.filter(t => t.date >= startDate);
+    }
+    
+    if (endDate) {
+      result = result.filter(t => t.date <= endDate);
+    }
+    
+    setFilteredTransactions(result);
+  }, [transactions, categoryFilter, startDate, endDate]);
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: 'TRY'
     }).format(amount);
+  };
+
+  const applyFilters = () => {
+    // Filters are applied automatically in useEffect
   };
 
   return (
@@ -101,7 +130,10 @@ const Transactions = ({
       <div className="all-transactions">
         <h3>Tüm İşlemler</h3>
         <div className="filters">
-          <select>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+          >
             <option>Tüm Kategoriler</option>
             {[...categories.income, ...categories.expense].map(cat => (
               <option key={cat} value={cat}>{cat}</option>
@@ -109,10 +141,18 @@ const Transactions = ({
           </select>
           
           <div className="date-filter">
-            <input type="date" />
+            <input 
+              type="date" 
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
             <span>-</span>
-            <input type="date" />
-            <button>Uygula</button>
+            <input 
+              type="date" 
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+            <button onClick={applyFilters}>Uygula</button>
           </div>
         </div>
         
@@ -128,7 +168,7 @@ const Transactions = ({
               </tr>
             </thead>
             <tbody>
-              {transactions.map(transaction => (
+              {filteredTransactions.map(transaction => (
                 <tr key={transaction.id} className={transaction.type}>
                   <td>{transaction.date}</td>
                   <td className="transaction-type">

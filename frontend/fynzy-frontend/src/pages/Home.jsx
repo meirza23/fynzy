@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Header from '../components/Header';
 import Navbar from '../components/Navbar';
 import Dashboard from './Dashboard';
@@ -34,35 +35,37 @@ const Home = () => {
     if (storedUser) {
       const userData = JSON.parse(storedUser);
       setUser(userData);
-      loadDemoData();
+      loadUserData();
     } else {
       navigate('/login');
     }
   }, [navigate]);
 
-  const loadDemoData = () => {
-    const demoTransactions = [
-      { id: 1, type: 'income', category: 'Maaş', amount: 12500, date: '2024-06-15', description: 'Aylık maaş' },
-      { id: 2, type: 'expense', category: 'Kira', amount: 4500, date: '2024-06-10', description: 'Ev kirası' },
-      { id: 3, type: 'expense', category: 'Market', amount: 1200, date: '2024-06-12', description: 'Haftalık market alışverişi' },
-      { id: 4, type: 'income', category: 'Freelance', amount: 3500, date: '2024-06-05', description: 'Web tasarım projesi' },
-      { id: 5, type: 'expense', category: 'Ulaşım', amount: 450, date: '2024-06-18', description: 'Aylık toplu taşıma' },
-      { id: 6, type: 'expense', category: 'Faturalar', amount: 850, date: '2024-06-20', description: 'Elektrik ve su faturası' },
-    ];
-    
-    setTransactions(demoTransactions);
-    
-    const totalIncome = demoTransactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
+  const loadUserData = async () => {
+    try {
+      // Fetch account summary
+      const summaryRes = await axios.get('/api/account/summary', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       
-    const totalExpense = demoTransactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
+      const { balance, income, expense } = summaryRes.data;
+      setBalance(balance || 0);
+      setIncome(income || 0);
+      setExpense(expense || 0);
       
-    setIncome(totalIncome);
-    setExpense(totalExpense);
-    setBalance(totalIncome - totalExpense);
+      // Fetch transactions
+      const transactionsRes = await axios.get('/api/transactions', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      
+      setTransactions(transactionsRes.data.map(t => ({
+        ...t,
+        date: new Date(t.date).toISOString().split('T')[0]
+      })) || []);
+    } catch (error) {
+      console.error('Veri yükleme hatası:', error);
+      alert('Finansal veriler yüklenirken hata oluştu');
+    }
   };
 
   const handleInputChange = (e) => {
@@ -73,7 +76,7 @@ const Home = () => {
     });
   };
 
-  const handleSubmitTransaction = (e) => {
+  const handleSubmitTransaction = async (e) => {
     e.preventDefault();
     
     if (!newTransaction.category || !newTransaction.amount) {
@@ -81,54 +84,87 @@ const Home = () => {
       return;
     }
     
-    const newId = transactions.length > 0 
-      ? Math.max(...transactions.map(t => t.id)) + 1 
-      : 1;
-    
-    const transaction = {
-      id: newId,
-      ...newTransaction
-    };
-    
-    setTransactions([...transactions, transaction]);
-    
-    if (newTransaction.type === 'income') {
-      setIncome(income + newTransaction.amount);
-      setBalance(balance + newTransaction.amount);
-    } else {
-      setExpense(expense + newTransaction.amount);
-      setBalance(balance - newTransaction.amount);
+    try {
+      const response = await axios.post('/api/transactions', {
+        type: newTransaction.type,
+        category: newTransaction.category,
+        amount: Number(newTransaction.amount),
+        date: newTransaction.date,
+        description: newTransaction.description
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      
+      const { newBalance } = response.data;
+      
+      // Update local state
+      const transaction = {
+        id: response.data.transactionId,
+        ...newTransaction,
+        amount: Number(newTransaction.amount)
+      };
+      
+      setTransactions([transaction, ...transactions]);
+      
+      if (newTransaction.type === 'income') {
+        setIncome(income + transaction.amount);
+      } else {
+        setExpense(expense + transaction.amount);
+      }
+      setBalance(newBalance);
+      
+      // Reset form
+      setNewTransaction({
+        type: 'expense',
+        category: '',
+        amount: '',
+        date: new Date().toISOString().split('T')[0],
+        description: ''
+      });
+      
+      alert('İşlem başarıyla eklendi!');
+    } catch (error) {
+      console.error('İşlem ekleme hatası:', error);
+      alert('İşlem eklenirken hata oluştu');
     }
-    
-    setNewTransaction({
-      type: 'expense',
-      category: '',
-      amount: '',
-      date: new Date().toISOString().split('T')[0],
-      description: ''
-    });
-    
-    alert('İşlem başarıyla eklendi!');
   };
 
   const getChartData = () => {
-    const labels = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran'];
-    const incomeData = [10000, 12000, 11000, 13000, 12500, 16000];
-    const expenseData = [8500, 9000, 9500, 11000, 10500, 7000];
+    // Get current year
+    const currentYear = new Date().getFullYear();
+    
+    // Initialize monthly data
+    const monthlyData = Array(12).fill().map(() => ({ income: 0, expense: 0 }));
+    
+    // Process transactions
+    transactions.forEach(t => {
+      const date = new Date(t.date);
+      if (date.getFullYear() === currentYear) {
+        const month = date.getMonth();
+        if (t.type === 'income') {
+          monthlyData[month].income += t.amount;
+        } else {
+          monthlyData[month].expense += t.amount;
+        }
+      }
+    });
+    
+    const labels = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
+                   'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
     
     return {
       labels,
       datasets: [
         {
           label: 'Gelir',
-          data: incomeData,
+          data: monthlyData.map(m => m.income),
           borderColor: 'rgb(75, 192, 192)',
           backgroundColor: 'rgba(75, 192, 192, 0.5)',
           tension: 0.3,
         },
         {
           label: 'Gider',
-          data: expenseData,
+          data: monthlyData.map(m => m.expense),
           borderColor: 'rgb(255, 99, 132)',
           backgroundColor: 'rgba(255, 99, 132, 0.5)',
           tension: 0.3,
