@@ -44,6 +44,21 @@ const Transactions = ({
     // Filters are applied automatically in useEffect
   };
 
+  // Kategorileri benzersiz hale getirme fonksiyonu
+  const getUniqueCategories = () => {
+    const allCategories = [
+      ...categories.income.map(cat => `Gelir: ${cat}`),
+      ...categories.expense.map(cat => `Gider: ${cat}`)
+    ];
+    
+    return ['Tüm Kategoriler', ...new Set(allCategories)];
+  };
+
+  // Orijinal kategori adını döndürme
+  const getOriginalCategory = (displayName) => {
+    return displayName.replace('Gelir: ', '').replace('Gider: ', '');
+  };
+
   return (
     <div className="transactions-section">
       <div className="transaction-form">
@@ -134,8 +149,7 @@ const Transactions = ({
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
           >
-            <option>Tüm Kategoriler</option>
-            {[...categories.income, ...categories.expense].map(cat => (
+            {getUniqueCategories().map(cat => (
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
@@ -169,7 +183,7 @@ const Transactions = ({
             </thead>
             <tbody>
               {filteredTransactions.map(transaction => (
-                <tr key={transaction.id} className={transaction.type}>
+                <tr key={`${transaction.id}-${transaction.date}`} className={transaction.type}>
                   <td>{transaction.date}</td>
                   <td className="transaction-type">
                     {transaction.type === 'income' ? (
