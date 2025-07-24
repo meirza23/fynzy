@@ -1,14 +1,13 @@
 import axios from 'axios';
 
-// Axios instance oluştur
 const api = axios.create({
-  baseURL: 'http://localhost:5082/api',
+  baseURL: 'http://localhost:5082/api', // Portu 5082 olarak güncelledim
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  withCredentials: true 
 });
 
-// Her istekten önce token'ı header'a ekle
 api.interceptors.request.use(config => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -19,26 +18,15 @@ api.interceptors.request.use(config => {
   return Promise.reject(error);
 });
 
-// Hata yönetimi
 api.interceptors.response.use(
   response => response,
   error => {
-    if (error.response) {
-      // 401 Unauthorized - Token süresi dolmuş veya geçersiz
-      if (error.response.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-      }
-      
-      // Backend'den özel hata mesajı varsa onu göster
-      const errorMessage = error.response.data?.message 
-        || error.response.data
-        || 'Beklenmeyen bir hata oluştu';
-      
-      return Promise.reject(errorMessage);
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
     }
-    return Promise.reject('Ağ hatası oluştu');
+    return Promise.reject(error.response?.data || error.message);
   }
 );
 

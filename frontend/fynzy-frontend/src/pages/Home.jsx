@@ -44,7 +44,7 @@ const Home = () => {
   const loadUserData = async () => {
     try {
       // Fetch account summary
-      const summaryRes = await axios.get('/api/account/summary', {
+      const summaryRes = await axios.get('/account/summary', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       
@@ -54,7 +54,7 @@ const Home = () => {
       setExpense(expense || 0);
       
       // Fetch transactions - HATA DÜZELTİLDİ
-      const transactionsRes = await axios.get('/api/transactions', {
+      const transactionsRes = await axios.get('/transactions', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       
@@ -90,15 +90,23 @@ const Home = () => {
     }
     
     try {
-      const response = await axios.post('/api/transactions', {
-        type: newTransaction.type,
-        category: newTransaction.category,
-        amount: Number(newTransaction.amount),
-        date: newTransaction.date,
-        description: newTransaction.description
-      }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      const response = await axios.post(
+      'http://localhost:5082/api/transactions', 
+      { 
+        Type: newTransaction.type,
+        Category: newTransaction.category,
+        Amount: newTransaction.amount,
+        Date: newTransaction.date,
+        Description: newTransaction.description
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json', // BU SATIRI EKLEYİN
+          Authorization: `Bearer ${token}`
+        },
+        withCredentials: true
+      }
+    );
       
       const { newBalance } = response.data;
       

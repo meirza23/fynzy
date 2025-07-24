@@ -23,7 +23,6 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Temel validasyon
     if (!credentials.email || !credentials.password) {
       setError('Lütfen tüm alanları doldurun');
       setIsLoading(false);
@@ -31,21 +30,27 @@ const Login = () => {
     }
     
     try {
-      // Backend'e giriş isteği gönder
-      const response = await api.post('/auth/login', {
-        email: credentials.email,
-        password: credentials.password
-      });
+      const response = await api.post('/auth/login', credentials);
 
-      // Token'ı ve kullanıcı bilgilerini sakla
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      // Backend'den dönen token ve user verisi
+      const { token, user } = response.data;
+
+      if (!token || !user) {
+        setError('Sunucudan geçersiz cevap alındı');
+        setIsLoading(false);
+        return;
+      }
       
-      // Ana sayfaya yönlendir
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
       navigate('/home');
     } catch (error) {
-      // Hata durumunda
-      setError(error.response?.data || 'Giriş işlemi başarısız oldu');
+      if (error.response && error.response.data && error.response.data.message) {
+        setError(error.response.data.message);
+      } else {
+        setError(error.message || 'Giriş işlemi başarısız oldu');
+      }
     } finally {
       setIsLoading(false);
     }

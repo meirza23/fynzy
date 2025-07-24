@@ -125,12 +125,13 @@ namespace Fynzy.api.Controllers
                 new Claim("fullName", $"{user.FirstName} {user.LastName}")
             };
 
+            var expireHours = _configuration.GetValue<int>("Jwt:ExpireHours");
+    
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(
-                    int.Parse(_configuration["Jwt:ExpireHours"]!)),
+                expires: DateTime.Now.AddHours(expireHours), // Düzeltildi
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);

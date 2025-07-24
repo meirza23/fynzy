@@ -3,18 +3,12 @@ using Fynzy.api.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// JWT Key null kontrolü ekleyin
-var jwtKey = builder.Configuration["Jwt:Key"];
-if (string.IsNullOrEmpty(jwtKey))
-{
-    throw new InvalidOperationException("JWT Key is not configured.");
-}
-
 // DbContext
-builder.Services.AddDbContext<FynzyDbContext>(options => 
+builder.Services.AddDbContext<FynzyDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL")));
 
 // Controllers
@@ -32,35 +26,50 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:5173")
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials();
+              .AllowCredentials()
+              .SetIsOriginAllowed(_ => true);
     });
 });
 
-// JWT Authentication
-builder.Services.AddAuthentication(options =>
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrEmpty(jwtKey))
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
+    throw new InvalidOperationException("JWT key is missing in configuration.");
+}
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options => {
+        options.TokenValidationParameters = new TokenValidationParameters {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+
+        options.Events = new JwtBearerEvents
 {
-    options.TokenValidationParameters = new TokenValidationParameters
+    OnAuthenticationFailed = context =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(jwtKey))
-    };
-});
+        Console.WriteLine($"JWT AUTH HATASI: {context.Exception.Message}");
+        Console.WriteLine($"TOKEN: {context.Request.Headers["Authorization"]}");
+        return Task.CompletedTask;
+    },
+    OnTokenValidated = context =>
+    {
+        Console.WriteLine("JWT TOKEN BAŞARIYLA DOĞRULANDI");
+        // Claim'leri kontrol edin
+        Console.WriteLine($"KULLANICI ID: {context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value}");
+        return Task.CompletedTask;
+    }
+};
+    });
+
+
 
 var app = builder.Build();
-
-// Middleware Pipeline
-app.UseCors("ReactPolicy");
 
 // Hata loglama middleware'i
 app.Use(async (context, next) =>
@@ -71,23 +80,29 @@ app.Use(async (context, next) =>
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Hata: {ex}");
+        Console.WriteLine($"HATA DETAYI: {ex}");
+        Console.WriteLine($"İSTEK YOLU: {context.Request.Path}");
+        Console.WriteLine($"AUTH HEADER: {context.Request.Headers["Authorization"]}");
         throw;
     }
 });
 
+// Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+app.UseRouting();
+
+app.UseCors("ReactPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
-// Database Migration
+// DB Migration otomatik
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<FynzyDbContext>();
