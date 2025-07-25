@@ -519,3 +519,84 @@ textarea {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* Improve notification styling */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  border-radius: 10px;
+  color: white;
+  font-weight: 500;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideIn 0.3s ease-out;
+  backdrop-filter: blur(10px);
+  max-width: 350px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.notification.success {
+  background: rgba(46, 204, 113, 0.9);
+  border-left: 4px solid #27ae60;
+}
+
+.notification.error {
+  background: rgba(231, 76, 60, 0.9);
+  border-left: 4px solid #c0392b;
+}
+
+.notification button {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 10px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.notification button:hover {
+  opacity: 1;
+}
+
+/* Better date filter styling */
+.date-filter {
+  background: rgba(20, 25, 50, 0.7) !important;
+  border-radius: 12px !important;
+  padding: 0.5rem 1rem !important;
+  gap: 0.8rem;
+}
+
+.date-filter input {
+  background: rgba(15, 20, 40, 0.5) !important;
+  border-radius: 8px !important;
+  padding: 0.7rem !important;
+  flex: 1;
+}
+
+.date-filter button {
+  background: rgba(106, 113, 224, 0.4) !important;
+  color: #fff !important;
+  padding: 0.7rem 1.2rem !important;
+  border-radius: 8px !important;
+}
+
+/* No results styling */
+.no-results {
+  text-align: center;
+  padding: 2rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+}

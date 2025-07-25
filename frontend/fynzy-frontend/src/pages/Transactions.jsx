@@ -12,13 +12,16 @@ const Transactions = ({
   const [categoryFilter, setCategoryFilter] = useState('Tüm Kategoriler');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [notification, setNotification] = useState(null);
   
   useEffect(() => {
     let result = transactions;
     
     // Apply category filter
     if (categoryFilter !== 'Tüm Kategoriler') {
-      result = result.filter(t => t.category === categoryFilter);
+      // Extract raw category name from display name
+      const rawCategory = categoryFilter.replace('Gelir: ', '').replace('Gider: ', '');
+      result = result.filter(t => t.category === rawCategory);
     }
     
     // Apply date filter
@@ -33,6 +36,15 @@ const Transactions = ({
     setFilteredTransactions(result);
   }, [transactions, categoryFilter, startDate, endDate]);
 
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
@@ -42,6 +54,31 @@ const Transactions = ({
 
   const applyFilters = () => {
     // Filters are applied automatically in useEffect
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!newTransaction.category) {
+      showNotification('Lütfen bir kategori seçin', 'error');
+      return;
+    }
+    
+    if (!newTransaction.amount || newTransaction.amount <= 0) {
+      showNotification('Lütfen geçerli bir tutar girin', 'error');
+      return;
+    }
+    
+    try {
+      await handleSubmitTransaction(e);
+      showNotification('İşlem başarıyla eklendi!', 'success');
+    } catch (error) {
+      showNotification('İşlem eklenirken hata oluştu', 'error');
+    }
+  };
+
+  const showNotification = (message, type) => {
+    setNotification({ message, type });
   };
 
   // Kategorileri benzersiz hale getirme fonksiyonu
@@ -54,29 +91,31 @@ const Transactions = ({
     return ['Tüm Kategoriler', ...new Set(allCategories)];
   };
 
-  // Orijinal kategori adını döndürme
-  const getOriginalCategory = (displayName) => {
-    return displayName.replace('Gelir: ', '').replace('Gider: ', '');
-  };
-
   return (
     <div className="transactions-section">
+      {notification && (
+        <div className={`notification ${notification.type}`}>
+          {notification.message}
+          <button onClick={() => setNotification(null)}>×</button>
+        </div>
+      )}
+      
       <div className="transaction-form">
         <h3>Yeni İşlem Ekle</h3>
-        <form onSubmit={handleSubmitTransaction}>
+        <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>İşlem Türü</label>
             <div className="type-toggle">
               <button 
                 type="button"
-                className={`toggle-btn ${newTransaction.type === 'income' ? 'active' : ''}`}
+                className={`toggle-btn ${newTransaction.type === 'income' ? 'active income' : ''}`}
                 onClick={() => setNewTransaction({...newTransaction, type: 'income'})}
               >
                 Gelir
               </button>
               <button 
                 type="button"
-                className={`toggle-btn ${newTransaction.type === 'expense' ? 'active' : ''}`}
+                className={`toggle-btn ${newTransaction.type === 'expense' ? 'active expense' : ''}`}
                 onClick={() => setNewTransaction({...newTransaction, type: 'expense'})}
               >
                 Gider
@@ -107,7 +146,7 @@ const Transactions = ({
                 name="amount" 
                 value={newTransaction.amount}
                 onChange={handleInputChange}
-                min="1"
+                min="0.01"
                 step="0.01"
                 placeholder="0.00"
                 required
@@ -159,12 +198,14 @@ const Transactions = ({
               type="date" 
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
+              placeholder="Başlangıç"
             />
             <span>-</span>
             <input 
               type="date" 
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
+              placeholder="Bitiş"
             />
             <button onClick={applyFilters}>Uygula</button>
           </div>
@@ -202,6 +243,11 @@ const Transactions = ({
               ))}
             </tbody>
           </table>
+          {filteredTransactions.length === 0 && (
+            <div className="no-results">
+              <p>Filtreyle eşleşen işlem bulunamadı</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -24,9 +24,6 @@ ChartJS.register(
 );
 
 const Dashboard = ({ 
-  income, 
-  expense, 
-  balance, 
   transactions, 
   getChartData, 
   getPieChartData 
@@ -38,50 +35,87 @@ const Dashboard = ({
     }).format(amount || 0);
   };
 
-  // Calculate trends based on actual data
-  const calculateTrend = (type, current) => {
-    if (transactions.length === 0) return 'Veri yok';
+  // Calculate current month totals
+  const calculateCurrentMonthTotals = () => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
     
-    const lastMonth = new Date();
-    lastMonth.setMonth(lastMonth.getMonth() - 1);
-    const lastMonthNumber = lastMonth.getMonth();
+    let income = 0;
+    let expense = 0;
     
-    const lastMonthTotal = transactions
-      .filter(t => {
-        const date = new Date(t.date);
-        return date.getMonth() === lastMonthNumber && t.type === type;
-      })
-      .reduce((sum, t) => sum + t.amount, 0);
+    transactions.forEach(t => {
+      const date = new Date(t.date);
+      if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
+        if (t.type === 'income') income += t.amount;
+        else expense += t.amount;
+      }
+    });
     
-    if (lastMonthTotal === 0) return 'Veri yok';
+    return { income, expense, net: income - expense };
+  };
+  
+  // Calculate previous month totals
+  const calculatePreviousMonthTotals = () => {
+    const now = new Date();
+    now.setMonth(now.getMonth() - 1); // Go back one month
+    const prevMonth = now.getMonth();
+    const prevYear = now.getFullYear();
     
-    const percentage = Math.round(((current - lastMonthTotal) / lastMonthTotal) * 100);
+    let income = 0;
+    let expense = 0;
+    
+    transactions.forEach(t => {
+      const date = new Date(t.date);
+      if (date.getMonth() === prevMonth && date.getFullYear() === prevYear) {
+        if (t.type === 'income') income += t.amount;
+        else expense += t.amount;
+      }
+    });
+    
+    return { income, expense, net: income - expense };
+  };
+  
+  const currentMonth = calculateCurrentMonthTotals();
+  const prevMonth = calculatePreviousMonthTotals();
+  
+  // Calculate trend percentage
+  const calculateTrend = (current, previous) => {
+    if (previous === 0) return 'Veri yok';
+    
+    const percentage = Math.round(((current - previous) / Math.abs(previous)) * 100);
     return `${percentage > 0 ? '+' : ''}${percentage}% geçen aya göre`;
   };
+  
+  const incomeTrend = calculateTrend(currentMonth.income, prevMonth.income);
+  const expenseTrend = calculateTrend(currentMonth.expense, prevMonth.expense);
+  const netTrend = calculateTrend(currentMonth.net, prevMonth.net);
 
   return (
     <div className="dashboard-section">
       <div className="summary-cards">
         <div className="card income-card">
-          <div className="card-title">Toplam Gelir</div>
-          <div className="card-value">{formatCurrency(income)}</div>
-          <div className={`card-trend ${income > 0 ? 'positive' : 'neutral'}`}>
-            {calculateTrend('income', income)}
+          <div className="card-title">Bu Ay Gelir</div>
+          <div className="card-value">{formatCurrency(currentMonth.income)}</div>
+          <div className={`card-trend ${incomeTrend.includes('+') ? 'positive' : 'neutral'}`}>
+            {incomeTrend}
           </div>
         </div>
         
         <div className="card expense-card">
-          <div className="card-title">Toplam Gider</div>
-          <div className="card-value">{formatCurrency(expense)}</div>
-          <div className={`card-trend ${expense > 0 ? 'negative' : 'neutral'}`}>
-            {calculateTrend('expense', expense)}
+          <div className="card-title">Bu Ay Gider</div>
+          <div className="card-value">{formatCurrency(currentMonth.expense)}</div>
+          <div className={`card-trend ${expenseTrend.includes('+') ? 'negative' : 'neutral'}`}>
+            {expenseTrend}
           </div>
         </div>
         
         <div className="card balance-card">
-          <div className="card-title">Net Bakiye</div>
-          <div className="card-value">{formatCurrency(balance)}</div>
-          <div className="card-info">Son 30 gün</div>
+          <div className="card-title">Bu Ay Net</div>
+          <div className="card-value">{formatCurrency(currentMonth.net)}</div>
+          <div className={`card-trend ${netTrend.includes('+') ? 'positive' : 'negative'}`}>
+            {netTrend}
+          </div>
         </div>
       </div>
       

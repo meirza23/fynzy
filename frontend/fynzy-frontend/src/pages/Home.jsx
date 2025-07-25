@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import api from '../api';
 import Header from '../components/Header';
 import Navbar from '../components/Navbar';
@@ -14,8 +13,6 @@ const Home = () => {
   const [user, setUser] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [balance, setBalance] = useState(0);
-  const [income, setIncome] = useState(0);
-  const [expense, setExpense] = useState(0);
   const [newTransaction, setNewTransaction] = useState({
     type: 'expense',
     category: '',
@@ -44,15 +41,13 @@ const Home = () => {
 
   const loadUserData = async () => {
     try {
-      // Fetch account summary using api instance
+      // Fetch account summary
       const summaryRes = await api.get('/account/summary');
       
-      const { balance, income, expense } = summaryRes.data;
+      const { balance } = summaryRes.data;
       setBalance(balance || 0);
-      setIncome(income || 0);
-      setExpense(expense || 0);
       
-      // Fetch transactions using api instance
+      // Fetch transactions
       const transactionsRes = await api.get('/transactions');
       
       // Array check
@@ -66,7 +61,6 @@ const Home = () => {
       })));
     } catch (error) {
       console.error('Veri yükleme hatası:', error);
-      alert('Finansal veriler yüklenirken hata oluştu');
     }
   };
 
@@ -80,11 +74,6 @@ const Home = () => {
 
   const handleSubmitTransaction = async (e) => {
     e.preventDefault();
-    
-    if (!newTransaction.category || !newTransaction.amount) {
-      alert('Lütfen kategori ve tutar alanlarını doldurun');
-      return;
-    }
     
     try {
       // Use api instance for automatic token handling
@@ -106,12 +95,6 @@ const Home = () => {
       };
       
       setTransactions([transaction, ...transactions]);
-      
-      if (newTransaction.type === 'income') {
-        setIncome(income + transaction.amount);
-      } else {
-        setExpense(expense + transaction.amount);
-      }
       setBalance(newBalance);
       
       // Reset form
@@ -123,10 +106,10 @@ const Home = () => {
         description: ''
       });
       
-      alert('İşlem başarıyla eklendi!');
+      return true;
     } catch (error) {
       console.error('İşlem ekleme hatası:', error);
-      alert('İşlem eklenirken hata oluştu');
+      throw error;
     }
   };
 
@@ -228,9 +211,6 @@ const Home = () => {
         
         {activeTab === 'dashboard' && (
           <Dashboard
-            income={income}
-            expense={expense}
-            balance={balance}
             transactions={transactions}
             getChartData={getChartData}
             getPieChartData={getPieChartData}
