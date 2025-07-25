@@ -6,7 +6,6 @@ import Navbar from '../components/Navbar';
 import Dashboard from './Dashboard';
 import Transactions from './Transactions';
 import Reports from './Reports';
-import Budget from './Budget';
 import '../styles/Home.css';
 
 const Home = () => {
