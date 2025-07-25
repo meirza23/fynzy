@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5082/api', // Portu 5082 olarak güncelledim
+  baseURL: 'http://localhost:5082/api',
   headers: {
     'Content-Type': 'application/json'
   },

@@ -117,11 +117,12 @@ namespace Fynzy.api.Controllers
             var credentials = new SigningCredentials(
                 securityKey, SecurityAlgorithms.HmacSha256);
 
+            // FIX: Use custom claim type for user ID
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim("userId", user.Id.ToString()), // Custom claim type
                 new Claim("fullName", $"{user.FirstName} {user.LastName}")
             };
 
@@ -131,7 +132,7 @@ namespace Fynzy.api.Controllers
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(expireHours), // Düzeltildi
+                expires: DateTime.Now.AddHours(expireHours),
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);

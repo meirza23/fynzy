@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt; // Added for JwtSecurityTokenHandler
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +38,9 @@ if (string.IsNullOrEmpty(jwtKey))
     throw new InvalidOperationException("JWT key is missing in configuration.");
 }
 
+// FIX: Clear default claim mappings
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => {
         options.TokenValidationParameters = new TokenValidationParameters {
@@ -46,28 +50,28 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            // FIX: Use custom claim type for identification
+            NameClaimType = "userId"
         };
 
         options.Events = new JwtBearerEvents
-{
-    OnAuthenticationFailed = context =>
-    {
-        Console.WriteLine($"JWT AUTH HATASI: {context.Exception.Message}");
-        Console.WriteLine($"TOKEN: {context.Request.Headers["Authorization"]}");
-        return Task.CompletedTask;
-    },
-    OnTokenValidated = context =>
-    {
-        Console.WriteLine("JWT TOKEN BAŞARIYLA DOĞRULANDI");
-        // Claim'leri kontrol edin
-        Console.WriteLine($"KULLANICI ID: {context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value}");
-        return Task.CompletedTask;
-    }
-};
+        {
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine($"JWT AUTH HATASI: {context.Exception.Message}");
+                Console.WriteLine($"TOKEN: {context.Request.Headers["Authorization"]}");
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                Console.WriteLine("JWT TOKEN BAŞARIYLA DOĞRULANDI");
+                // FIX: Log custom userId claim instead of NameIdentifier
+                Console.WriteLine($"KULLANICI ID: {context.Principal?.FindFirst("userId")?.Value}");
+                return Task.CompletedTask;
+            }
+        };
     });
-
-
 
 var app = builder.Build();
 

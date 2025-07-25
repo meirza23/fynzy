@@ -24,18 +24,28 @@ namespace Fynzy.api.Controllers
         [HttpGet("summary")]
         public async Task<IActionResult> GetAccountSummary()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            // FIX: Use custom claim type "userId"
+            var userIdClaim = User.FindFirst("userId");
             if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
             {
                 return Unauthorized();
             }
             
+            // HESAP OLUŞTURMA KONTROLÜ EKLENDİ
             var account = await _context.Accounts
                 .FirstOrDefaultAsync(a => a.UserId == userId);
                 
             if (account == null)
             {
-                return BadRequest("Hesap bulunamadı");
+                // Hesap yoksa oluştur
+                account = new Account
+                {
+                    Balance = 0,
+                    LastUpdated = DateTime.UtcNow,
+                    UserId = userId
+                };
+                _context.Accounts.Add(account);
+                await _context.SaveChangesAsync();
             }
             
             // Transactions null kontrolü eklendi

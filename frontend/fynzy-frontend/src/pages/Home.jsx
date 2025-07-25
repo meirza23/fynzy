@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import api from '../api';
 import Header from '../components/Header';
 import Navbar from '../components/Navbar';
 import Dashboard from './Dashboard';
@@ -43,22 +44,18 @@ const Home = () => {
 
   const loadUserData = async () => {
     try {
-      // Fetch account summary
-      const summaryRes = await axios.get('/account/summary', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      // Fetch account summary using api instance
+      const summaryRes = await api.get('/account/summary');
       
       const { balance, income, expense } = summaryRes.data;
       setBalance(balance || 0);
       setIncome(income || 0);
       setExpense(expense || 0);
       
-      // Fetch transactions - HATA DÜZELTİLDİ
-      const transactionsRes = await axios.get('/transactions', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      // Fetch transactions using api instance
+      const transactionsRes = await api.get('/transactions');
       
-      // Dizi kontrolü eklendi
+      // Array check
       const transactionsData = Array.isArray(transactionsRes.data) 
         ? transactionsRes.data 
         : [];
@@ -90,24 +87,15 @@ const Home = () => {
     }
     
     try {
-      const response = await axios.post(
-      'http://localhost:5082/api/transactions', 
-      { 
+      // Use api instance for automatic token handling
+      const response = await api.post('/transactions', {
         Type: newTransaction.type,
         Category: newTransaction.category,
         Amount: newTransaction.amount,
         Date: newTransaction.date,
         Description: newTransaction.description
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json', // BU SATIRI EKLEYİN
-          Authorization: `Bearer ${token}`
-        },
-        withCredentials: true
-      }
-    );
-      
+      });
+        
       const { newBalance } = response.data;
       
       // Update local state

@@ -47,9 +47,20 @@ namespace Fynzy.api.Controllers
             if (userId == null)
                 return Unauthorized();
 
+            // HESAP OLUŞTURMA KONTROLÜ EKLENDİ
             var account = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == userId);
             if (account == null)
-                return BadRequest("Hesap bulunamadı");
+            {
+                // Hesap yoksa oluştur
+                account = new Account
+                {
+                    Balance = 0,
+                    LastUpdated = DateTime.UtcNow,
+                    UserId = userId.Value
+                };
+                _context.Accounts.Add(account);
+                await _context.SaveChangesAsync();
+            }
 
             var transaction = new Transaction
             {
@@ -79,10 +90,10 @@ namespace Fynzy.api.Controllers
             });
         }
 
-        // Yardımcı metot: Kullanıcı ID'sini JWT'den çek
+        // FIX: Use custom claim type "userId"
         private int? GetUserId()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var userIdClaim = User.FindFirst("userId");
             if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
                 return null;
             return userId;
