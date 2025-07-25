@@ -113,6 +113,21 @@ const Home = () => {
     }
   };
 
+  // Yeni silme fonksiyonu
+  const handleDeleteTransaction = async (id) => {
+    try {
+      const response = await api.delete(`/transactions/${id}`);
+      const { newBalance } = response.data;
+      
+      setTransactions(transactions.filter(t => t.id !== id));
+      setBalance(newBalance);
+      return true;
+    } catch (error) {
+      console.error('İşlem silme hatası:', error);
+      throw error;
+    }
+  };
+
   const getChartData = () => {
     // Get current year
     const currentYear = new Date().getFullYear();
@@ -224,12 +239,13 @@ const Home = () => {
             setNewTransaction={setNewTransaction}
             handleInputChange={handleInputChange}
             handleSubmitTransaction={handleSubmitTransaction}
+            handleDeleteTransaction={handleDeleteTransaction}
             transactions={transactions}
           />
         )}
         
         {activeTab === 'reports' && <Reports />}
-        {activeTab === 'budget' && <Budget />}
+        
       </main>
     </div>
   );

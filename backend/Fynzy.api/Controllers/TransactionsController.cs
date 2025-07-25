@@ -90,6 +90,40 @@ namespace Fynzy.api.Controllers
             });
         }
 
+        // DELETE: api/transactions/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteTransaction(int id)
+        {
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized();
+
+            var transaction = await _context.Transactions.FindAsync(id);
+            if (transaction == null || transaction.UserId != userId)
+                return NotFound();
+
+            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == userId);
+            if (account == null)
+                return NotFound("Account not found");
+
+            // İşlemin tersini uygula
+            if (transaction.Type == "income")
+                account.Balance -= transaction.Amount;
+            else
+                account.Balance += transaction.Amount;
+
+            account.LastUpdated = DateTime.UtcNow;
+
+            _context.Transactions.Remove(transaction);
+            await _context.SaveChangesAsync();
+
+            return Ok(new 
+            {
+                message = "İşlem başarıyla silindi",
+                newBalance = account.Balance
+            });
+        }
+
         // FIX: Use custom claim type "userId"
         private int? GetUserId()
         {

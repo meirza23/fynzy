@@ -21,12 +21,6 @@ const Navbar = ({ activeTab, setActiveTab }) => {
       >
         <i className="icon reports-icon"></i> Raporlar
       </button>
-      <button 
-        className={activeTab === 'budget' ? 'active' : ''}
-        onClick={() => setActiveTab('budget')}
-      >
-        <i className="icon budget-icon"></i> Bütçe
-      </button>
     </nav>
   );
 };

@@ -6,6 +6,7 @@ const Transactions = ({
   setNewTransaction, 
   handleInputChange, 
   handleSubmitTransaction, 
+  handleDeleteTransaction,
   transactions
 }) => {
   const [filteredTransactions, setFilteredTransactions] = useState([]);
@@ -79,6 +80,18 @@ const Transactions = ({
 
   const showNotification = (message, type) => {
     setNotification({ message, type });
+  };
+
+  // Silme fonksiyonu
+  const handleDelete = async (id) => {
+    if (window.confirm('Bu işlemi silmek istediğinize emin misiniz?')) {
+      try {
+        await handleDeleteTransaction(id);
+        showNotification('İşlem başarıyla silindi!', 'success');
+      } catch (error) {
+        showNotification('İşlem silinirken hata oluştu', 'error');
+      }
+    }
   };
 
   // Kategorileri benzersiz hale getirme fonksiyonu
@@ -220,6 +233,7 @@ const Transactions = ({
                 <th>Kategori</th>
                 <th>Açıklama</th>
                 <th>Tutar</th>
+                <th>İşlemler</th>
               </tr>
             </thead>
             <tbody>
@@ -238,6 +252,14 @@ const Transactions = ({
                   <td className={transaction.type}>
                     {transaction.type === 'income' ? '+' : '-'} 
                     {formatCurrency(transaction.amount)}
+                  </td>
+                  <td>
+                    <button 
+                      className="delete-btn"
+                      onClick={() => handleDelete(transaction.id)}
+                    >
+                      Sil
+                    </button>
                   </td>
                 </tr>
               ))}
