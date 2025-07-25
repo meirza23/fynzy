@@ -243,7 +243,11 @@ const Home = () => {
           />
         )}
         
-        {activeTab === 'reports' && <Reports />}
+        {activeTab === 'reports' && (
+          <Reports 
+            transactions={transactions} 
+          />
+        )}
         
       </main>
     </div>
