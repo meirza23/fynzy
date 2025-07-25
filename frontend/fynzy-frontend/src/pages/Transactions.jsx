@@ -14,6 +14,8 @@ const Transactions = ({
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [notification, setNotification] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState(null);
   
   useEffect(() => {
     let result = transactions;
@@ -83,15 +85,27 @@ const Transactions = ({
   };
 
   // Silme fonksiyonu
-  const handleDelete = async (id) => {
-    if (window.confirm('Bu işlemi silmek istediğinize emin misiniz?')) {
+  const handleDelete = (id) => {
+    setTransactionToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (transactionToDelete) {
       try {
-        await handleDeleteTransaction(id);
+        await handleDeleteTransaction(transactionToDelete);
         showNotification('İşlem başarıyla silindi!', 'success');
       } catch (error) {
         showNotification('İşlem silinirken hata oluştu', 'error');
       }
+      setShowDeleteModal(false);
+      setTransactionToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setTransactionToDelete(null);
   };
 
   // Kategorileri benzersiz hale getirme fonksiyonu
@@ -106,6 +120,23 @@ const Transactions = ({
 
   return (
     <div className="transactions-section">
+      {showDeleteModal && (
+        <div className="modal-overlay">
+          <div className="delete-modal">
+            <h3>Silme Onayı</h3>
+            <p>Bu işlemi silmek istediğinize emin misiniz?</p>
+            <div className="modal-actions">
+              <button className="modal-btn cancel-btn" onClick={cancelDelete}>
+                İptal
+              </button>
+              <button className="modal-btn confirm-btn" onClick={confirmDelete}>
+                Sil
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {notification && (
         <div className={`notification ${notification.type}`}>
           {notification.message}
